@@ -51,11 +51,11 @@ Both forms must send responses to this spreadsheet (in each form: **Responses �
 1. Open the spreadsheet → **Extensions → Apps Script**.
 2. Delete everything in `Code.gs`, paste in the whole contents of `apps-script/notify-riders-and-drivers.gs`, and click **Save**.
 3. In the function menu at the top, choose **`checkSetup`** → **Run**. Google asks for permission the first time: **Review permissions** → choose your account → **Advanced → Go to (project) → Allow**. Then open **Execution log** and check every line has a ✓.
-4. Optional: run **`sendTestEmails`** to get a sample of both emails (uses Trip #1) in your own inbox.
+4. Optional: run **`sendTestEmails`** to get a sample of both emails (uses your first posted trip) in your own inbox.
 5. Run **`installTrigger`** once. Emails are now live.
 
 To stop emails, run **`removeTrigger`**. Settings (sender name, whether riders get an email, question titles) are at the top of the script.
 
-**Trip numbers:** if the driver responses tab has a `Trip #` column, the script uses it. If not, Trip #1 is the first driver response, #2 the second, and so on, so the Public tab must number trips the same way. `checkSetup` tells you which it's using and shows who Trip #1 is.
+**Trip numbers:** if the driver responses tab has a `Trip #` column, the script uses it. If not, the first driver response is Trip #`firstTripNumber` (a setting, default 1), the next is one higher, and so on. `checkSetup` lists the trips it sees and compares them with the Public tab. If they don't match, it tells you which `firstTripNumber` to use.
 
 **Limits:** emails come from the Google account that installs the script. Free Gmail accounts can send about 100 a day (each sign-up uses 2).

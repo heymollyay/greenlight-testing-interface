@@ -43,6 +43,11 @@ const SETTINGS = {
     plate: "License plate (optional)",
   },
 
+  // Only used if the driver responses tab has NO "Trip #" column: the Trip #
+  // of the first driver response (then +1 for each response after it).
+  // checkSetup suggests the right number if it doesn't match your Public tab.
+  firstTripNumber: 1,
+
   // Tab with "Trip #" and "Seats left" columns (your Public tab), so the driver
   // email can say how many seats remain. "" = find it automatically.
   seatsTab: "",
@@ -166,19 +171,32 @@ function driverSheet_() {
 }
 
 /**
- * Finds a trip in the driver responses. Uses a "Trip #" column on that tab if
- * there is one; otherwise Trip # = response order (1st response = Trip #1).
+ * Every trip in the driver responses, as [{ tripNo, row, head }]. Uses a
+ * "Trip #" column on that tab if there is one; otherwise numbers responses in
+ * order starting at SETTINGS.firstTripNumber.
  */
-function findTrip_(tripNo) {
+function allTrips_() {
   const sh = driverSheet_();
-  if (!sh || !tripNo) return null;
+  if (!sh) return [];
   const values = sh.getDataRange().getValues();
   const head = values.shift().map(String);
   const tripCol = head.findIndex((h) => /^trip\s*#?$|^trip\s*(no|number|id)\.?$/i.test(h.trim()));
-  let row;
-  if (tripCol > -1) row = values.find((r) => cleanTrip_(r[tripCol]) === tripNo);
-  else row = values[Number(tripNo) - 1];
-  if (!row || !row.some(String)) return null;
+  return values
+    .map((row, i) => ({
+      tripNo: tripCol > -1 ? cleanTrip_(row[tripCol]) : String(i + Number(SETTINGS.firstTripNumber || 1)),
+      row,
+      head,
+      tripColumn: tripCol > -1 ? head[tripCol] : null,
+    }))
+    .filter((t) => t.tripNo && t.row.some((c) => String(c).trim()));
+}
+
+/** Finds one trip by its Trip #, with the driver's details. */
+function findTrip_(tripNo) {
+  if (!tripNo) return null;
+  const hit = allTrips_().find((t) => t.tripNo === tripNo);
+  if (!hit) return null;
+  const { row, head } = hit;
 
   const tz = SpreadsheetApp.getActive().getSpreadsheetTimeZone();
   const get = (key) => {
@@ -191,10 +209,20 @@ function findTrip_(tripNo) {
     }
     return String(v).trim();
   };
-  const trip = {};
+  const trip = { tripNo };
   Object.keys(SETTINGS.driver).forEach((k) => (trip[k] = get(k)));
-  trip.tripColumn = tripCol > -1 ? head[tripCol] : null;
   return trip.email ? trip : null;
+}
+
+/** Trip numbers listed on the Public / seats tab, if there is one. */
+function publicTripNumbers_() {
+  const sh = seatsSheet_();
+  if (!sh) return null;
+  const values = sh.getDataRange().getValues();
+  const head = values.shift().map((h) => String(h).trim().toLowerCase());
+  const t = head.findIndex((h) => /^trip/.test(h));
+  if (t < 0) return null;
+  return values.map((r) => cleanTrip_(r[t])).filter(Boolean);
 }
 
 function seatsSheet_() {
@@ -254,11 +282,35 @@ function checkSetup() {
       if (!head.includes(SETTINGS.driver[k])) log.push(`  ! Column not found for ${k}: "${SETTINGS.driver[k]}" (that detail will be left out)`);
     });
     const tripCol = head.find((h) => /^trip\s*#?$|^trip\s*(no|number|id)\.?$/i.test(h));
+    const first = Number(SETTINGS.firstTripNumber || 1);
     log.push(tripCol
       ? `✓ Trip # comes from the "${tripCol}" column on that tab.`
-      : `• No "Trip #" column on that tab, so Trip #1 = the 1st driver response, #2 = the 2nd, and so on. Make sure your Public tab numbers trips the same way.`);
-    const t1 = findTrip_("1");
-    log.push(t1 ? `✓ Trip #1 → ${t1.name}, ${t1.destination}, ${t1.date} ${t1.time}` : `• No Trip #1 found yet.`);
+      : `• No "Trip #" column on that tab, so the 1st driver response is Trip #${first}, the 2nd is #${first + 1}, and so on (firstTripNumber setting).`);
+
+    const trips = allTrips_();
+    if (!trips.length) log.push(`• No rides posted yet.`);
+    trips.slice(0, 5).forEach((t) => {
+      const d = findTrip_(t.tripNo);
+      log.push(`  Trip #${t.tripNo} → ${d ? `${d.name}, ${d.destination}, ${d.date} ${d.time}` : "(row has no driver email)"}`);
+    });
+    if (trips.length > 5) log.push(`  …and ${trips.length - 5} more`);
+
+    // Make sure the script and the Public tab use the same numbers.
+    const pub = publicTripNumbers_();
+    if (pub && pub.length && trips.length) {
+      const mine = new Set(trips.map((t) => t.tripNo));
+      const missing = pub.filter((n) => !mine.has(n));
+      if (!missing.length) {
+        log.push(`✓ Every Trip # on the "${seatsSheet_().getName()}" tab (${pub.map((n) => "#" + n).join(", ")}) matches a driver response.`);
+      } else {
+        log.push(`✗ The "${seatsSheet_().getName()}" tab lists ${pub.map((n) => "#" + n).join(", ")}, but the script numbers trips ${trips.map((t) => "#" + t.tripNo).join(", ")}. Riders would get the wrong driver.`);
+        if (!tripCol) {
+          const suggest = first + (Math.min(...pub.map(Number)) - Math.min(...trips.map((t) => Number(t.tripNo))));
+          log.push(`  → If the Public tab lists every trip in the same order, set firstTripNumber: ${suggest} at the top of the script and run checkSetup again.`);
+          log.push(`  → Or add a "Trip #" column to the driver responses tab with the same numbers the Public tab shows; the script will use it automatically.`);
+        }
+      }
+    }
   }
 
   const riderTab = ss.getSheets().find((sh) => headers_(sh).includes(SETTINGS.rider.trip));
@@ -294,14 +346,15 @@ function removeTrigger() {
   console.log("Emails stopped.");
 }
 
-/** Emails YOU a sample of both messages using Trip #1, so you can see them. */
+/** Emails YOU a sample of both messages using the first posted trip. */
 function sendTestEmails() {
   const me = Session.getEffectiveUser().getEmail();
-  const trip = findTrip_("1");
-  if (!trip) { console.log("Post at least one ride first (no Trip #1 found)."); return; }
+  const first = allTrips_()[0];
+  const trip = first && findTrip_(first.tripNo);
+  if (!trip) { console.log("No posted rides found yet. Post a ride with the driver form first."); return; }
   const sample = Object.assign({}, trip, { email: me });
   const rider = { name: "Test Rider", email: me, year: "Junior" };
-  notifyDriver_(sample, rider, "1", seatsLeft_("1"));
-  notifyRider_(sample, rider, "1");
-  console.log(`Sent 2 test emails to ${me}.`);
+  notifyDriver_(sample, rider, trip.tripNo, seatsLeft_(trip.tripNo));
+  notifyRider_(sample, rider, trip.tripNo);
+  console.log(`Sent 2 test emails to ${me} using Trip #${trip.tripNo} (${trip.destination}).`);
 }
