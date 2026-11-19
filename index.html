@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Yellowtail&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -55,7 +55,11 @@
     <!-- Offer a ride (driver Google Form) -->
     <section class="panel" role="tabpanel" id="panel-offer" aria-labelledby="tab-offer" hidden>
       <h2>Offer a ride</h2>
-      <p class="muted">Post a trip you're already taking. It appears under Open rides after a few minutes.</p>
+      <p class="muted">Post a trip you're already taking. It appears under Open rides after a few minutes. When a rider joins, we'll email you their name and contact info.</p>
+      <p class="notice email-note">
+        <strong>Watch for our emails.</strong> Ride emails come from <a href="mailto:mcmidkiff@wm.edu">mcmidkiff@wm.edu</a>. If you don't see one, check your spam folder and mark it "Not spam."
+        Need more help with your riders' information? Email <a href="mailto:mcmidkiff@wm.edu">mcmidkiff@wm.edu</a>.
+      </p>
       <form class="gform" id="driver-form" novalidate onsubmit="return false"></form>
     </section>
 
@@ -63,6 +67,10 @@
     <section class="panel" role="tabpanel" id="panel-join" aria-labelledby="tab-join" hidden>
       <h2>Join a ride</h2>
       <p class="muted">Tell the driver you'd like a seat. Pick a ride under Open rides to fill in its details here. After you submit, we'll email you the driver's contact and car details, and let the driver know you're joining.</p>
+      <p class="notice email-note">
+        <strong>Watch for our emails.</strong> Ride emails come from <a href="mailto:mcmidkiff@wm.edu">mcmidkiff@wm.edu</a>. If you don't see one, check your spam folder and mark it "Not spam."
+        Questions about your ride or rider information? Email <a href="mailto:mcmidkiff@wm.edu">mcmidkiff@wm.edu</a>.
+      </p>
       <form class="gform" id="rider-form" novalidate onsubmit="return false"></form>
     </section>
   </main>
