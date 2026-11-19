@@ -243,7 +243,14 @@ const CONFIG = {
     const parts = v.trim().split(/\s+/);
     return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : v;
   };
-  const display = (h, v) => (/name/i.test(h) ? shortName(v) : v);
+  const display = (h, v) => (/name|driver/i.test(h) ? shortName(v) : v);
+  const statusCol = () => find(/^status$/i);
+  const seatsCol = () => find(/seats/i);
+  // A ride can't be joined if its Status says full/closed/cancelled or no seats are left.
+  const isClosed = (r) => {
+    const s = statusCol(), seats = seatsCol();
+    return (s && /full|closed|cancel|done|complete/i.test(r[s])) || (seats && r[seats] !== "" && +r[seats] <= 0);
+  };
 
   function rideLabel(r) {
     const c = cols();
@@ -258,12 +265,18 @@ const CONFIG = {
     listEl.innerHTML = shown.map((r) => {
       const title = (to && r[to]) || r[headers.find((h) => !isHidden(h))] || "Ride";
       const when = [date && r[date], time && r[time]].filter(Boolean).join(" · ");
-      const details = headers.filter((h) => !isHidden(h) && ![trip, to, date, time].includes(h) && r[h])
+      const status = statusCol();
+      const closed = isClosed(r);
+      const details = headers.filter((h) => !isHidden(h) && ![trip, to, date, time, status].includes(h) && r[h])
         .map((h) => `<div><dt>${esc(h)}</dt><dd>${esc(display(h, r[h]))}</dd></div>`).join("");
       const tripTag = trip && r[trip] ? `<span class="ride__trip">Trip #${esc(String(r[trip]).replace(/^#/, ""))}</span>` : "";
-      return `<li class="ride"><div class="ride__head"><div>${tripTag}<h3 class="ride__title">${esc(title)}</h3></div>${when ? `<span class="ride__when">${esc(when)}</span>` : ""}</div>
+      const statusTag = status && r[status] ? `<span class="ride__status${closed ? " is-closed" : ""}">${esc(r[status])}</span>` : "";
+      const action = closed
+        ? `<button class="btn btn--ghost" type="button" disabled>Not taking riders</button>`
+        : `<button class="btn btn--sun" type="button" data-join="${rides.indexOf(r)}">Join this ride</button>`;
+      return `<li class="ride${closed ? " is-closed" : ""}"><div class="ride__head"><div>${tripTag}${statusTag}<h3 class="ride__title">${esc(title)}</h3></div>${when ? `<span class="ride__when">${esc(when)}</span>` : ""}</div>
         <div class="ride__body">${details ? `<dl>${details}</dl>` : ""}
-        <div class="ride__actions"><button class="btn btn--sun" type="button" data-join="${rides.indexOf(r)}">Join this ride</button></div></div></li>`;
+        <div class="ride__actions">${action}</div></div></li>`;
     }).join("");
     emptyEl.hidden = shown.length > 0;
     $("#ride-empty-text").textContent = rides.length ? "No rides match your search." : "No open rides yet. Check back soon!";
