@@ -206,7 +206,7 @@ const CONFIG = {
   buildForm($("#driver-form"), CONFIG.driverForm, "Post my ride", "Ride posted!",
     "Thanks! Your ride will show under Open rides within a few minutes.");
   buildForm($("#rider-form"), CONFIG.riderForm, "Request a seat", "Request sent!",
-    "Thanks! The driver will reach out to confirm your seat.");
+    "Thanks! Check your email for the driver's details. They'll reach out to confirm your seat.");
 
   /* ---------- rides from the published sheet ---------- */
   function parseCSV(text) {
