@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GreenLight Pilot — Rides</title>
+  <meta name="description" content="GreenLight pilot: post a ride, join a ride, and see open rides for William &amp; Mary students.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#1D3B2A">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Yellowtail&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="top">
+    <div class="wrap top__inner">
+      <img class="top__logo" src="assets/logo-wide.webp" width="879" height="352" alt="GreenLight">
+      <span class="badge">Pilot</span>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <section class="intro">
+      <h1>Rides <span class="script">around the 'Burg</span></h1>
+      <p>This is the GreenLight pilot for William &amp; Mary students. Drivers post trips they're already taking, and riders join for a gas chip-in.</p>
+    </section>
+
+    <div class="tabs" role="tablist" aria-label="GreenLight pilot">
+      <button class="tab" role="tab" id="tab-rides" aria-controls="panel-rides" aria-selected="true">Open rides</button>
+      <button class="tab" role="tab" id="tab-offer" aria-controls="panel-offer" aria-selected="false" tabindex="-1">Offer a ride</button>
+      <button class="tab" role="tab" id="tab-join" aria-controls="panel-join" aria-selected="false" tabindex="-1">Join a ride</button>
+    </div>
+
+    <!-- Open rides (from the driver form's response sheet) -->
+    <section class="panel" role="tabpanel" id="panel-rides" aria-labelledby="tab-rides">
+      <div class="panel__bar">
+        <label class="search">
+          <span class="sr-only">Search rides</span>
+          <input type="search" id="ride-search" placeholder="Search destination, date, driver…" autocomplete="off">
+        </label>
+        <button class="btn btn--ghost" type="button" id="ride-refresh">Refresh</button>
+      </div>
+      <p class="muted" id="ride-meta" aria-live="polite"></p>
+      <ul class="rides" id="ride-list" role="list"></ul>
+      <div class="empty" id="ride-empty" hidden>
+        <img src="assets/car.webp" width="96" height="83" alt="">
+        <p id="ride-empty-text">No open rides yet.</p>
+      </div>
+    </section>
+
+    <!-- Offer a ride (driver Google Form) -->
+    <section class="panel" role="tabpanel" id="panel-offer" aria-labelledby="tab-offer" hidden>
+      <h2>Offer a ride</h2>
+      <p class="muted">Post a trip you're already taking. It appears under Open rides after a few minutes.</p>
+      <form class="gform" id="driver-form" novalidate onsubmit="return false"></form>
+    </section>
+
+    <!-- Join a ride (rider Google Form) -->
+    <section class="panel" role="tabpanel" id="panel-join" aria-labelledby="tab-join" hidden>
+      <h2>Join a ride</h2>
+      <p class="muted">Tell the driver you'd like a seat. Pick a ride under Open rides to fill in its details here.</p>
+      <form class="gform" id="rider-form" novalidate onsubmit="return false"></form>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <p>GreenLight pilot · Williamsburg, VA · An independent student venture, not an official service of William &amp; Mary.</p>
+      <p>Everything posted here is visible to anyone with the link. Only share what you're comfortable making public.</p>
+    </div>
+  </footer>
+
+  <div class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js?v=1" defer></script>
+</body>
+</html>
